@@ -1,5 +1,5 @@
-import { createJsonErrorResponseHandler } from '@ai-sdk/provider-utils'
-import { z } from 'zod'
+import { createJsonErrorResponseHandler } from "@ai-sdk/provider-utils";
+import { z } from "zod";
 
 const ollamaErrorDataSchema = z.object({
   error: z.object({
@@ -8,11 +8,11 @@ const ollamaErrorDataSchema = z.object({
     param: z.any().nullable(),
     type: z.string(),
   }),
-})
+});
 
-export type OllamaErrorData = z.infer<typeof ollamaErrorDataSchema>
+export type OllamaErrorData = z.infer<typeof ollamaErrorDataSchema>;
 
 export const ollamaFailedResponseHandler = createJsonErrorResponseHandler({
   errorSchema: ollamaErrorDataSchema,
   errorToMessage: (data) => data.error.message,
-})
+});

@@ -1,103 +1,103 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from "vitest";
 
-import { inferToolCallsFromResponse } from '@/generate-tool/infer-tool-calls-from-response'
-import { OllamaChatResponseSchema } from '@/ollama-chat-language-model'
+import { inferToolCallsFromResponse } from "@/generate-tool/infer-tool-calls-from-response";
+import { OllamaChatResponseSchema } from "@/ollama-chat-language-model";
 
-describe('inferToolCallsFromAssistantMessage', () => {
-  it('should infer valid selected tools response', () => {
+describe("inferToolCallsFromAssistantMessage", () => {
+  it("should infer valid selected tools response", () => {
     // Arrange
     const response = {
-      finish_reason: 'stop',
+      finish_reason: "stop",
       message: {
         content: JSON.stringify([
-          { arguments: { numbers: [2, 3] }, name: 'sum' },
+          { arguments: { numbers: [2, 3] }, name: "sum" },
         ]),
-        role: 'assistant',
+        role: "assistant",
       },
-    } as OllamaChatResponseSchema
+    } as OllamaChatResponseSchema;
 
     // Act
-    const parsedResponse = inferToolCallsFromResponse(response)
+    const parsedResponse = inferToolCallsFromResponse(response);
 
     // Assert
-    expect(parsedResponse.finish_reason).toEqual('tool-calls')
+    expect(parsedResponse.finish_reason).toEqual("tool-calls");
     expect(parsedResponse.message.tool_calls).toContainEqual(
       expect.objectContaining({
         function: {
           arguments: JSON.stringify({ numbers: [2, 3] }),
-          name: 'sum',
+          name: "sum",
         },
         id: expect.any(String),
-        type: 'function',
-      }),
-    )
-  })
+        type: "function",
+      })
+    );
+  });
 
-  it('should infer valid selected tool response', () => {
+  it("should infer valid selected tool response", () => {
     // Arrange
     const response = {
-      finish_reason: 'stop',
+      finish_reason: "stop",
       message: {
         content: JSON.stringify({
           arguments: { numbers: [2, 3] },
-          name: 'sum',
+          name: "sum",
         }),
-        role: 'assistant',
+        role: "assistant",
       },
-    } as OllamaChatResponseSchema
+    } as OllamaChatResponseSchema;
 
     // Act
-    const parsedResponse = inferToolCallsFromResponse(response)
+    const parsedResponse = inferToolCallsFromResponse(response);
 
     // Assert
-    expect(parsedResponse.finish_reason).toEqual('tool-calls')
+    expect(parsedResponse.finish_reason).toEqual("tool-calls");
     expect(parsedResponse.message.tool_calls).toContainEqual(
       expect.objectContaining({
         function: {
           arguments: JSON.stringify({ numbers: [2, 3] }),
-          name: 'sum',
+          name: "sum",
         },
         id: expect.any(String),
-        type: 'function',
-      }),
-    )
-  })
+        type: "function",
+      })
+    );
+  });
 
-  it('should ignore invalid tool calls', () => {
+  it("should ignore invalid tool calls", () => {
     // Arrange
     const response = {
-      finish_reason: 'stop',
+      finish_reason: "stop",
       message: {
         content: JSON.stringify([
-          { arguments: { numbers: [2, 3] }, name: 'sum' },
+          { arguments: { numbers: [2, 3] }, name: "sum" },
         ]).slice(0, 10),
-        role: 'assistant',
+        role: "assistant",
       },
-    } as OllamaChatResponseSchema
+    } as OllamaChatResponseSchema;
 
     // Act
-    const parsedResponse = inferToolCallsFromResponse(response)
+    const parsedResponse = inferToolCallsFromResponse(response);
 
     // Assert
-    expect(parsedResponse).toEqual(response)
-  })
+    expect(parsedResponse).toEqual(response);
+  });
 
-  it('should set stop as finish reason if no tools was called', () => {
+  it("should set stop as finish reason if no tools was called", () => {
     // Arrange
     const response = {
       finish_reason: undefined,
       message: {
         content: JSON.stringify([
-          { arguments: { numbers: [2, 3] }, name: 'sum' },
+          { arguments: { numbers: [2, 3] }, name: "sum" },
         ]).slice(0, 10),
-        role: 'assistant',
+        role: "assistant",
       },
-    } as OllamaChatResponseSchema
+    } as OllamaChatResponseSchema;
 
     // Act
-    const parsedResponse = inferToolCallsFromResponse(response)
+    const parsedResponse = inferToolCallsFromResponse(response);
 
     // Assert
-    expect(parsedResponse.finish_reason).toEqual('stop')
-  })
-})
+    expect(parsedResponse.finish_reason).toEqual("stop");
+  });
+});

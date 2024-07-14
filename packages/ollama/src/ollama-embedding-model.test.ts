@@ -20,7 +20,7 @@ describe('doEmbed', () => {
     embedding?: EmbeddingModelV1Embedding
   } = {}) {
     server.responseBodyJson = {
-      embedding,
+      em∏bedding,
     }
   }
 

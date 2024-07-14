@@ -1,23 +1,23 @@
-import { EmptyResponseBodyError } from '@ai-sdk/provider'
+import { EmptyResponseBodyError } from "@ai-sdk/provider";
 import {
   extractResponseHeaders,
   ParseResult,
   ResponseHandler,
   safeParseJSON,
-} from '@ai-sdk/provider-utils'
-import { ZodSchema } from 'zod'
+} from "@ai-sdk/provider-utils";
+import { ZodSchema } from "zod";
 
-import { TextLineStream } from '@/utils/text-line-stream'
+import { TextLineStream } from "@/utils/text-line-stream";
 
 export const createJsonStreamResponseHandler =
   <T>(
-    chunkSchema: ZodSchema<T>,
+    chunkSchema: ZodSchema<T>
   ): ResponseHandler<ReadableStream<ParseResult<T>>> =>
   async ({ response }: { response: Response }) => {
-    const responseHeaders = extractResponseHeaders(response)
+    const responseHeaders = extractResponseHeaders(response);
 
     if (response.body === null) {
-      throw new EmptyResponseBodyError({})
+      throw new EmptyResponseBodyError({});
     }
 
     return {
@@ -32,10 +32,10 @@ export const createJsonStreamResponseHandler =
                 safeParseJSON({
                   schema: chunkSchema,
                   text: chunkText,
-                }),
-              )
+                })
+              );
             },
-          }),
+          })
         ),
-    }
-  }
+    };
+  };

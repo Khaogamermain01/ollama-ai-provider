@@ -1,40 +1,40 @@
-import { generateId } from '@ai-sdk/provider-utils'
-import { z } from 'zod'
+import { generateId } from "@ai-sdk/provider-utils";
+import { z } from "zod";
 
-import type { OllamaChatResponseSchema } from '@/ollama-chat-language-model'
+import type { OllamaChatResponseSchema } from "@/ollama-chat-language-model";
 
 export function inferToolCallsFromResponse(
-  response: OllamaChatResponseSchema,
+  response: OllamaChatResponseSchema
 ): OllamaChatResponseSchema {
   try {
-    const tool = JSON.parse(response.message.content)
+    const tool = JSON.parse(response.message.content);
 
-    let parsedTools = toolResponseSchema.parse(tool)
+    let parsedTools = toolResponseSchema.parse(tool);
     if (!Array.isArray(parsedTools)) {
-      parsedTools = [parsedTools]
+      parsedTools = [parsedTools];
     }
 
     return {
       ...response,
-      finish_reason: 'tool-calls',
+      finish_reason: "tool-calls",
       message: {
-        content: '',
-        role: 'assistant',
+        content: "",
+        role: "assistant",
         tool_calls: parsedTools.map((parsedTool) => ({
           function: {
             arguments: JSON.stringify(parsedTool.arguments),
             name: parsedTool.name,
           },
           id: generateId(),
-          type: 'function',
+          type: "function",
         })),
       },
-    }
+    };
   } catch {
     return {
       ...response,
-      finish_reason: 'stop',
-    }
+      finish_reason: "stop",
+    };
   }
 }
 
@@ -43,10 +43,10 @@ const toolResponseSchema = z.union([
     z.object({
       arguments: z.record(z.unknown()),
       name: z.string(),
-    }),
+    })
   ),
   z.object({
     arguments: z.record(z.unknown()),
     name: z.string(),
   }),
-])
+]);

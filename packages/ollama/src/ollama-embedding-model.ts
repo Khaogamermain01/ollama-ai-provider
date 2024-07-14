@@ -1,59 +1,59 @@
 import {
   EmbeddingModelV1,
   TooManyEmbeddingValuesForCallError,
-} from '@ai-sdk/provider'
+} from "@ai-sdk/provider";
 import {
   createJsonResponseHandler,
   postJsonToApi,
-} from '@ai-sdk/provider-utils'
-import { z } from 'zod'
+} from "@ai-sdk/provider-utils";
+import { z } from "zod";
 
 import {
   OllamaEmbeddingModelId,
   OllamaEmbeddingSettings,
-} from '@/ollama-embedding-settings'
-import { ollamaFailedResponseHandler } from '@/ollama-error'
+} from "@/ollama-embedding-settings";
+import { ollamaFailedResponseHandler } from "@/ollama-error";
 
 type OllamaEmbeddingConfig = {
-  baseURL: string
-  fetch?: typeof fetch
-  headers: () => Record<string, string | undefined>
-  provider: string
-}
+  baseURL: string;
+  fetch?: typeof fetch;
+  headers: () => Record<string, string | undefined>;
+  provider: string;
+};
 export class OllamaEmbeddingModel implements EmbeddingModelV1<string> {
-  readonly specificationVersion = 'v1'
-  readonly modelId: OllamaEmbeddingModelId
+  readonly specificationVersion = "v1";
+  readonly modelId: OllamaEmbeddingModelId;
 
-  private readonly config: OllamaEmbeddingConfig
-  private readonly settings: OllamaEmbeddingSettings
+  private readonly config: OllamaEmbeddingConfig;
+  private readonly settings: OllamaEmbeddingSettings;
 
   get provider(): string {
-    return this.config.provider
+    return this.config.provider;
   }
 
   get maxEmbeddingsPerCall(): number {
-    return this.settings.maxEmbeddingsPerCall ?? 1
+    return this.settings.maxEmbeddingsPerCall ?? 1;
   }
 
   get supportsParallelCalls(): boolean {
-    return false
+    return false;
   }
 
   constructor(
     modelId: OllamaEmbeddingModelId,
     settings: OllamaEmbeddingSettings,
-    config: OllamaEmbeddingConfig,
+    config: OllamaEmbeddingConfig
   ) {
-    this.modelId = modelId
-    this.settings = settings
-    this.config = config
+    this.modelId = modelId;
+    this.settings = settings;
+    this.config = config;
   }
 
   async doEmbed({
     abortSignal,
     values,
-  }: Parameters<EmbeddingModelV1<string>['doEmbed']>[0]): Promise<
-    Awaited<ReturnType<EmbeddingModelV1<string>['doEmbed']>>
+  }: Parameters<EmbeddingModelV1<string>["doEmbed"]>[0]): Promise<
+    Awaited<ReturnType<EmbeddingModelV1<string>["doEmbed"]>>
   > {
     if (values.length > this.maxEmbeddingsPerCall) {
       throw new TooManyEmbeddingValuesForCallError({
@@ -61,14 +61,14 @@ export class OllamaEmbeddingModel implements EmbeddingModelV1<string> {
         modelId: this.modelId,
         provider: this.provider,
         values,
-      })
+      });
     }
 
-    const embeddings: Awaited<ReturnType<EmbeddingModelV1<string>['doEmbed']>> =
+    const embeddings: Awaited<ReturnType<EmbeddingModelV1<string>["doEmbed"]>> =
       {
         embeddings: [],
         rawResponse: { headers: {} },
-      }
+      };
 
     for (const value of values) {
       const { responseHeaders, value: response } = await postJsonToApi({
@@ -81,19 +81,19 @@ export class OllamaEmbeddingModel implements EmbeddingModelV1<string> {
         fetch: this.config.fetch,
         headers: this.config.headers(),
         successfulResponseHandler: createJsonResponseHandler(
-          ollamaTextEmbeddingResponseSchema,
+          ollamaTextEmbeddingResponseSchema
         ),
         url: `${this.config.baseURL}/embeddings`,
-      })
+      });
 
-      embeddings.embeddings.push(response.embedding)
-      embeddings.rawResponse = { headers: responseHeaders }
+      embeddings.embeddings.push(response.embedding);
+      embeddings.rawResponse = { headers: responseHeaders };
     }
 
-    return embeddings
+    return embeddings;
   }
 }
 
 const ollamaTextEmbeddingResponseSchema = z.object({
   embedding: z.array(z.number()),
-})
+});
