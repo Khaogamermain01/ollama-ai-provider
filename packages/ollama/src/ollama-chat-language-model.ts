@@ -85,7 +85,7 @@ export class OllamaChatLanguageModel implements LanguageModelV1 {
         return {
           args: {
             ...baseArguments,
-            messages: convertToOllamaChatMessages(prompt, tools),
+            messages: convertToOllamaChatMessages(prompt, tools, undefined, this.modelId),
             tools: tools?.map((tool) => ({
               function: {
                 description: tool.description,
@@ -105,7 +105,7 @@ export class OllamaChatLanguageModel implements LanguageModelV1 {
           args: {
             ...baseArguments,
             format: 'json',
-            messages: convertToOllamaChatMessages(prompt),
+            messages: convertToOllamaChatMessages(prompt, undefined, undefined, this.modelId),
           },
           type,
           warnings,
@@ -121,6 +121,7 @@ export class OllamaChatLanguageModel implements LanguageModelV1 {
               prompt,
               [mode.tool],
               mode.tool.name,
+              this.modelId
             ),
             tool_choice: {
               function: { name: mode.tool.name },

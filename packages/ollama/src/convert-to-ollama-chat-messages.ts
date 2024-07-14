@@ -12,6 +12,7 @@ export function convertToOllamaChatMessages(
   prompt: LanguageModelV1Prompt,
   tools?: LanguageModelV1FunctionTool[],
   toolChoice?: string,
+  modelId: string,
 ): OllamaChatPrompt {
   const messages: OllamaChatPrompt = []
 
@@ -21,7 +22,7 @@ export function convertToOllamaChatMessages(
     switch (role) {
       case 'system': {
         messages.push({
-          content: injectToolsSchemaIntoSystem({
+          content: modelId === 'mistral' ? content : injectToolsSchemaIntoSystem({
             system: content,
             toolChoice,
             tools,
@@ -33,12 +34,14 @@ export function convertToOllamaChatMessages(
       }
 
       case 'user': {
+        const selectedTools = tools?.filter(
+          (tool) => !toolChoice || tool.name === toolChoice,
+        );
+
         messages.push({
           ...content.reduce<{ content: string; images?: string[] }>(
             (previous, current) => {
-              if (current.type === 'text') {
-                previous.content += current.text
-              } else if (
+              if (
                 current.type === 'image' &&
                 current.image instanceof URL
               ) {
@@ -55,9 +58,29 @@ export function convertToOllamaChatMessages(
 
               return previous
             },
-            { content: '' },
+            { },
           ),
           role: 'user',
+          content: modelId === 'mistral' ? `
+            [AVAILABLE_TOOLS] ${JSON.stringify(selectedTools)} [/AVAILABLE_TOOLS]
+            [INST] ${content.reduce<{ content: string; images?: string[] }>(
+              (previous, current) => {
+                if (current.type === 'text') {
+                  previous.content += current.text;
+                }
+                return previous;
+              },
+              { content: '' }
+            ).content} [/INST]
+          `.trim() : content.reduce<{ content: string; images?: string[] }>(
+            (previous, current) => {
+              if (current.type === 'text') {
+                previous.content += current.text;
+              }
+              return previous;
+            },
+            { content: '' }
+          ).content,
         })
         break
       }
@@ -78,6 +101,14 @@ export function convertToOllamaChatMessages(
         break
       }
 
+      case 'tool': {
+        messages.push({
+          content: content,
+          role: 'tool'
+        })
+        break
+      }
+
       default: {
         const _exhaustiveCheck: string = role
         throw new Error(`Unsupported role: ${_exhaustiveCheck}`)
@@ -85,7 +116,7 @@ export function convertToOllamaChatMessages(
     }
   }
 
-  if (!hasSystem && tools) {
+  if (!hasSystem && tools && modelId !== 'mistral') {
     messages.unshift({
       content: injectToolsSchemaIntoSystem({
         system: '',
